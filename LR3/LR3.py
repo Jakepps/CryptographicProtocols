@@ -1,83 +1,119 @@
-def add(x, y, p):
-    return (x + y) % p
+class GaloisFieldCalculator:
+    def __init__(self, modulus_poly, degree):
+        self.modulus_poly = modulus_poly
+        self.degree = degree
 
-def subtract(x, y, p):
-    return (x - y) % p
+    def add(self, a, b):
+        return (a + b) % 2
 
-def multiply(x, y, p):
-    return (x * y) % p
+    def subtract(self, a, b):
+        return (a - b) % 2
 
-def division(x, y, p):
-    gcd_xy = gcd(x, y)
-    if gcd_xy != 1:
-        raise ValueError("Деление невозможно в конечном поле!")
-    return (x * pow(y, p - 2, p)) % p
+    def multiply(self, a, b):
+        result = 0
+        while b:
+            if b & 1: #проверяем является ли младший бит b равный 1
+                result ^= a #XOR выполняется для умножения чисел в поле Галуа
+            a <<= 1 # сдвигается на один бит влево с помощью операции a <<= 1, это эквивалентно умножению a на 2
+            if a & (1 << self.degree): #проверяем не превышает ли степени поля
+                a ^= self.modulus_poly #нужно для выполнения операции модуляции,тк мы работаем в поле Галуа и должны оставаться в пределах его элементов
+            b >>= 1
+        return result
 
-def power(x, n, p):
-    return pow(x, n, p)
+    def divide(self, a, b):
+        quotient = 0
+        while a >= b:
+            shift = len(bin(a)) - len(bin(b)) # на сколько бит нужно сдвинуть b, чтобы его старший бит совпал со старшим битом a
+            a ^= b << shift
+            quotient |= 1 << shift
+        return quotient
 
-def gcd(x, y):
-    while y != 0:
-        x, y = y, x % y
-    return x
+    def gcd(self, a, b):
+        while b:
+            a, b = b, a % b
+        return a
 
-def multiplication_table(p):
-    print("Таблица умножения:")
-    for i in range(p):
-        for j in range(p):
-            print(f"{i} * {j} = {multiply(i, j, p)}")
-        print()
+    def power(self, base, exponent):
+        result = 1
+        while exponent:
+            if exponent & 1:
+                result = self.multiply(result, base)
+            base = self.multiply(base, base)
+            exponent >>= 1
+        return result
+
+    def multiplication_table(self):
+        table = [[0] * 2**self.degree for _ in range(2**self.degree)]
+        for i in range(2**self.degree):
+            for j in range(2**self.degree):
+                table[i][j] = self.multiply(i, j)
+        return table
+
+def parse_polynomial(polynomial_str):
+    return int(polynomial_str.replace(" ", ""), 2)
 
 def main():
-    try:
-        p = int(input("Введите простое число (p) для конечного поля: "))
-        polynomial = input("Введите коэффициенты многочлена, разделяя их пробелом: ").split()
-        polynomial = [int(coeff) for coeff in polynomial]
+    degree = int(input("Введите степень поля Галуа: "))
+    modulus_poly_str = input("Введите образующий многочлен в двоичной форме через пробел: ")
+    modulus_poly = parse_polynomial(modulus_poly_str)
+    gf_calculator = GaloisFieldCalculator(modulus_poly, degree)
+    
+    while True:
+        print("\nВыберите операцию:")
+        print("1. Сложение")
+        print("2. Вычитание")
+        print("3. Умножение")
+        print("4. Деление")
+        print("5. НОД")
+        print("6. Возведение в степень")
+        print("7. Таблица умножения")
+        print("8. Выход")
+        choice = int(input("Введите номер операции: "))
 
-        while True:
-            print("\nВыберите операцию:")
-            print("1. Сложение")
-            print("2. Вычитание")
-            print("3. Умножение")
-            print("4. Деление")
-            print("5. Степень")
-            print("6. НОД")
-            print("7. Таблица умножения")
-            print("8. Выход")
+        if choice == 8:
+            print("Выход...")
+            break
 
-            choice = int(input("Введите свой выбор: "))
-
-            if choice == 8:
-                print("Выход...")
-                break
-
-            if choice > 8 or choice < 1:
-                print("Ввидите номер операции из представленных!")
-                continue
-
-            x = int(input("Ввидите первый операнд: "))
-            y = int(input("Ввидите второй операнд: "))
-
-            if choice == 1:
-                result = add(x, y, p)
-            elif choice == 2:
-                result = subtract(x, y, p)
-            elif choice == 3:
-                result = multiply(x, y, p)
-            elif choice == 4:
-                result = division(x, y, p)
-            elif choice == 5:
-                result = power(x, y, p)
-            elif choice == 6:
-                result = gcd(x, y)
-            elif choice == 7:
-                multiplication_table(p)
-                continue
-
-            print("Результат:", result)
-
-    except ValueError:
-        print("Неверный ввод. Пожалуйста, введите действительный номер операции.")
+        if choice == 1:
+            a = int(input("Введите первое число: "))
+            b = int(input("Введите второе число: "))
+            result = gf_calculator.add(a, b)
+            print("Результат сложения:", result)
+        elif choice == 2:
+            a = int(input("Введите первое число: "))
+            b = int(input("Введите второе число: "))
+            result = gf_calculator.subtract(a, b)
+            print("Результат вычитания:", result)
+        elif choice == 3:
+            a = int(input("Введите первое число: "))
+            b = int(input("Введите второе число: "))
+            result = gf_calculator.multiply(a, b)
+            print("Результат умножения:", a, "*", b, "=", result)
+        elif choice == 4:
+            a = int(input("Введите делимое: "))
+            b = int(input("Введите делитель: "))
+            result = gf_calculator.divide(a, b)
+            print("Результат деления:", a, "/", b, "=", result)
+        elif choice == 5:
+            a = int(input("Введите первое число: "))
+            b = int(input("Введите второе число: "))
+            result = gf_calculator.gcd(a, b)
+            print("НОД чисел:", result)
+        elif choice == 6:
+            base = int(input("Введите основание: "))
+            exponent = int(input("Введите показатель степени: "))
+            result = gf_calculator.power(base, exponent)
+            print("Результат возведения в степень:", base, "^", exponent, "=", result)
+        elif choice == 7:
+            print("Таблица умножения:")
+            table = gf_calculator.multiplication_table()
+            for i in range(2**degree):
+                for j in range(2**degree):
+                    print(f"{i}*{j}={table[i][j]}", end="\t")
+                print()
+            continue
+        else:
+            print("Неверный выбор операции.")
 
 if __name__ == "__main__":
     main()
