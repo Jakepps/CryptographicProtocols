@@ -1,63 +1,61 @@
 class GaloisFieldCalculator:
-    def __init__(self, modulus_poly, degree):
+    def __init__(self, modulus_poly, coeffs):
         self.modulus_poly = modulus_poly
-        self.degree = degree
+        self.coeffs = coeffs
+    
+    def __add__(self, other):
+        result_coeffs = [(self.coeffs[i] + other.coeffs[i]) % 2 for i in range(max(len(self.coeffs), len(other.coeffs)))]
+        return GaloisFieldCalculator(self.modulus_poly, result_coeffs)
 
-    def add(self, a, b):
-        return (a + b) % 2
+    def __mul__(self, other):
+        result_coeffs = [0] * (len(self.coeffs) + len(other.coeffs) - 1)
+        for i in range(len(self.coeffs)):
+            for j in range(len(other.coeffs)):
+                result_coeffs[i+j] += self.coeffs[i] * other.coeffs[j]
+        for i in range(len(result_coeffs)):
+            result_coeffs[i] %= 2
+        return GaloisFieldCalculator(self.modulus_poly, result_coeffs)
 
-    def subtract(self, a, b):
-        return (a - b) % 2
+    def __sub__(self, other):
+        result_coeffs = [(self.coeffs[i] - other.coeffs[i]) % 2 for i in range(max(len(self.coeffs), len(other.coeffs)))]
+        return GaloisFieldCalculator(self.modulus_poly, result_coeffs)
 
-    def multiply(self, a, b):
-        result = 0
-        while b:
-            if b & 1: #проверяем является ли младший бит b равный 1
-                result ^= a #XOR выполняется для умножения чисел в поле Галуа
-            a <<= 1 # сдвигается на один бит влево с помощью операции a <<= 1, это эквивалентно умножению a на 2
-            if a & (1 << self.degree): #проверяем не превышает ли степени поля
-                a ^= self.modulus_poly #мы работаем в поле Галуа и должны оставаться в пределах его элементов
-            b >>= 1
-        return result
+    def __truediv__(self, other):
+        q = GaloisFieldCalculator(self.modulus_poly, [0])
+        r = self
+        while len(r.coeffs) >= len(other.coeffs):
+            leading_degree = len(r.coeffs) - 1
+            other_degree = len(other.coeffs) - 1
+            q += GaloisFieldCalculator(self.modulus_poly, [0]*(leading_degree - other_degree) + [1])
+            r -= (GaloisFieldCalculator(self.modulus_poly, [0]*(leading_degree - other_degree) + [1]) * other)
+        return q, r
 
-    def divide(self, a, b):
-        quotient = 0
-        while a >= b:
-            shift = len(bin(a)) - len(bin(b)) # на сколько бит нужно сдвинуть b чтобы его старший бит совпал со старшим битом a
-            a ^= b << shift
-            quotient |= 1 << shift
-        return quotient
-
-    def gcd(self, a, b):
-        while b:
+    def gcd(self, other):
+        a, b = self, other
+        while b != GaloisFieldCalculator(self.modulus_poly, [0]):
             a, b = b, a % b
         return a
 
-    def power(self, base, exponent):
-        result = 1
-        while exponent:
-            if exponent & 1:
-                result = self.multiply(result, base)
-            base = self.multiply(base, base)
-            exponent >>= 1
+    def __pow__(self, power):
+        result = GaloisFieldCalculator(self.modulus_poly, [1])
+        for _ in range(power):
+            result *= self
         return result
 
     def multiplication_table(self):
-        table = [[0] * 2**self.degree for _ in range(2**self.degree)]
-        for i in range(2**self.degree):
-            for j in range(2**self.degree):
-                table[i][j] = self.multiply(i, j)
-        return table
+        for i in range(1, len(self.coeffs)):
+            for j in range(1, len(self.coeffs)):
+                result = GaloisFieldCalculator(self.modulus_poly, [0]*(i+j-1)+[1]) * GaloisFieldCalculator(self.modulus_poly, [0]*(i+j-1)+[1])
+                print(f"{i} * {j} = {result.coeffs}")
 
-def parse_polynomial(polynomial_str):
-    return int(polynomial_str.replace(" ", ""), 2)
+def input_GaloisFieldCalculator(modulus_poly):
+    coeffs = list(map(int, input("Введите коэффициенты многочлена через пробел: ").split()))
+    return GaloisFieldCalculator(modulus_poly, coeffs)
 
 def main():
-    degree = int(input("Введите степень поля Галуа: "))
-    modulus_poly_str = input("Введите образующий многочлен в двоичной форме через пробел: ")
-    modulus_poly = parse_polynomial(modulus_poly_str)
-    gf_calculator = GaloisFieldCalculator(modulus_poly, degree)
-    
+    modulus_poly_coeffs = list(map(int, input("Введите коэффициенты образующего многочлена через пробел: ").split()))
+    modulus_poly = GaloisFieldCalculator(None, modulus_poly_coeffs)
+
     while True:
         print("\nВыберите операцию:")
         print("1. Сложение")
@@ -70,50 +68,46 @@ def main():
         print("8. Выход")
         choice = int(input("Введите номер операции: "))
 
-        if choice == 8:
+        if choice == 1:
+            poly1 = input_GaloisFieldCalculator(modulus_poly)
+            poly2 = input_GaloisFieldCalculator(modulus_poly)
+            result = poly1 + poly2
+            print("Результат:", result.coeffs)
+        elif choice == 2:
+            poly1 = input_GaloisFieldCalculator(modulus_poly)
+            poly2 = input_GaloisFieldCalculator(modulus_poly)
+            result = poly1 - poly2
+            print("Результат:", result.coeffs)
+        elif choice == 3:
+            poly1 = input_GaloisFieldCalculator(modulus_poly)
+            poly2 = input_GaloisFieldCalculator(modulus_poly)
+            result = poly1 * poly2
+            print("Результат:", result.coeffs)
+        elif choice == 4:
+            poly1 = input_GaloisFieldCalculator(modulus_poly)
+            poly2 = input_GaloisFieldCalculator(modulus_poly)
+            quotient, remainder = poly1 / poly2
+            print("Частное:", quotient.coeffs)
+            print("Остаток:", remainder.coeffs)
+        elif choice == 5:
+            poly1 = input_GaloisFieldCalculator(modulus_poly)
+            poly2 = input_GaloisFieldCalculator(modulus_poly)
+            gcd = poly1.gcd(poly2)
+            print("НОД:", gcd.coeffs)
+        elif choice == 6:
+            poly = input_GaloisFieldCalculator(modulus_poly)
+            power = int(input("Введите степень: "))
+            result = poly ** power
+            print("Результат:", result.coeffs)
+        elif choice == 7:
+            poly = input_GaloisFieldCalculator(modulus_poly)
+            poly.multiplication_table()
+        elif choice == 8:
             print("Выход...")
             break
-
-        if choice == 1:
-            a = int(input("Введите первое число: "))
-            b = int(input("Введите второе число: "))
-            result = gf_calculator.add(a, b)
-            print("Результат сложения:", result)
-        elif choice == 2:
-            a = int(input("Введите первое число: "))
-            b = int(input("Введите второе число: "))
-            result = gf_calculator.subtract(a, b)
-            print("Результат вычитания:", result)
-        elif choice == 3:
-            a = int(input("Введите первое число: "))
-            b = int(input("Введите второе число: "))
-            result = gf_calculator.multiply(a, b)
-            print("Результат умножения:", a, "*", b, "=", result)
-        elif choice == 4:
-            a = int(input("Введите делимое: "))
-            b = int(input("Введите делитель: "))
-            result = gf_calculator.divide(a, b)
-            print("Результат деления:", a, "/", b, "=", result)
-        elif choice == 5:
-            a = int(input("Введите первое число: "))
-            b = int(input("Введите второе число: "))
-            result = gf_calculator.gcd(a, b)
-            print("НОД чисел:", result)
-        elif choice == 6:
-            base = int(input("Введите основание: "))
-            exponent = int(input("Введите показатель степени: "))
-            result = gf_calculator.power(base, exponent)
-            print("Результат возведения в степень:", base, "^", exponent, "=", result)
-        elif choice == 7:
-            print("Таблица умножения:")
-            table = gf_calculator.multiplication_table()
-            for i in range(2**degree):
-                for j in range(2**degree):
-                    print(f"{i}*{j}={table[i][j]}", end="\t")
-                print()
-            continue
         else:
             print("Неверный выбор операции.")
+            continue
 
 if __name__ == "__main__":
     main()
