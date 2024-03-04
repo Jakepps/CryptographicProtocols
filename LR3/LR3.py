@@ -53,7 +53,9 @@ def input_GaloisFieldCalculator(modulus_poly):
     return GaloisFieldCalculator(modulus_poly, coeffs)
 
 def main():
+    field_degree = int(input("Введите степень поля Галуа (степень двойки): "))
     modulus_poly_coeffs = list(map(int, input("Введите коэффициенты образующего многочлена через пробел: ").split()))
+    modulus_poly_coeffs = modulus_poly_coeffs * field_degree
     modulus_poly = GaloisFieldCalculator(None, modulus_poly_coeffs)
 
     while True:
