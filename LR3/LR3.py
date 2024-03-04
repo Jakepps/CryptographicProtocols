@@ -52,10 +52,27 @@ def input_GaloisFieldCalculator(modulus_poly):
     coeffs = list(map(int, input("Введите коэффициенты многочлена через пробел: ").split()))
     return GaloisFieldCalculator(modulus_poly, coeffs)
 
+def is_irreducible(poly):
+    # Проверяем деление на все многочлены меньшей степени
+    for i in range(1, len(poly) // 2 + 1):
+        if len(poly) % i == 0:
+            factors = [poly[j:j+i] for j in range(0, len(poly), i)]
+            if all(factor == factors[0] for factor in factors):
+                return False
+    return True
+
+def input_modulus_poly():
+    while True:
+        coeffs = list(map(int, input("Введите коэффициенты образующего многочлена через пробел: ").split()))
+        if is_irreducible(coeffs):
+            return coeffs
+        else:
+            print("Многочлен не является неприводимым. Пожалуйста, введите неприводимый многочлен.")
+
+
 def main():
     field_degree = int(input("Введите степень поля Галуа (степень двойки): "))
-    modulus_poly_coeffs = list(map(int, input("Введите коэффициенты образующего многочлена через пробел: ").split()))
-    modulus_poly_coeffs = modulus_poly_coeffs * field_degree
+    modulus_poly_coeffs = input_modulus_poly() * field_degree
     modulus_poly = GaloisFieldCalculator(None, modulus_poly_coeffs)
 
     while True:
