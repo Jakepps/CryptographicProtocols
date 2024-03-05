@@ -15,7 +15,7 @@ class GaloisFieldCalculator:
             for j in range(len(other.coeffs)):
                 result_coeffs[i+j] += self.coeffs[i] * other.coeffs[j]
         for i in range(len(result_coeffs)):
-            result_coeffs[i] %= 2 #нужно чтобы коэфф.оставались в поле GF(2)
+            result_coeffs[i] %= 2
         return GaloisFieldCalculator(self.modulus_poly, result_coeffs)
 
     def __sub__(self, other):
@@ -54,8 +54,30 @@ class GaloisFieldCalculator:
                 print(f"{i} * {j} = {result.coeffs}")
 
 def input_GaloisFieldCalculator(modulus_poly):
-    coeffs = list(map(int, input("Введите коэффициенты многочлена через пробел: ").split()))
-    return GaloisFieldCalculator(modulus_poly, coeffs)
+    while True:
+        coeffs_str = input("Введите коэффициенты многочлена через пробел: ")
+        if ' ' in coeffs_str:
+            coeffs = list(map(int, coeffs_str.split()))
+        else:
+            coeffs = [int(bit) for bit in coeffs_str]    
+        polynomial = bin_to_polynomial(coeffs)
+        print("Многочлен в виде x^n:", polynomial)
+
+        if all(coeff in {0, 1} for coeff in coeffs):
+            if len(coeffs) >= len(modulus_poly.coeffs):
+                _, remainder = modulus_poly / GaloisFieldCalculator(modulus_poly, coeffs)
+                print("Многочлен не принадлежит полю, поделим на образующим и получим: ", remainder.coeffs)
+                return GaloisFieldCalculator(modulus_poly, remainder.coeffs)
+            else:
+                return GaloisFieldCalculator(modulus_poly, coeffs)
+        else:
+            print("Многочлен содержит недопустимые коэффициенты. Пожалуйста, введите многочлен с правильными коэффициентами.")
+
+def dev_remainder(modulus_poly, poly1):
+    poly1 = GaloisFieldCalculator(modulus_poly, poly1)
+    modulus_poly = GaloisFieldCalculator(modulus_poly, modulus_poly)
+    _, remainder = poly1 / modulus_poly
+    return remainder.coeffs
 
 def is_irreducible(poly):
     # перебираем все возможные делители степени многочлена poly, начиная с 1 и заканчивая половиной длины многочлена
@@ -72,14 +94,28 @@ def input_modulus_poly():
     while True:
         coeffs = list(map(int, input("Введите коэффициенты образующего многочлена через пробел: ").split()))
         if is_irreducible(coeffs):
+            polynomial = bin_to_polynomial(coeffs)
+            print("Образующий многочлен в виде x^n:", polynomial)
             return coeffs
         else:
             print("Многочлен не является неприводимым. Пожалуйста, введите неприводимый многочлен.")
 
+def bin_to_polynomial(coeffs):
+    polynomial = ""
+    for i in range(len(coeffs)):
+        if coeffs[i] == 1:
+            if polynomial:
+                polynomial += " + "
+            if len(coeffs) - 1 - i == 0:
+                polynomial += "1"
+            else:
+                polynomial += f"x^{len(coeffs)-1-i}"
+    if not polynomial:
+        polynomial = "0"
+    return polynomial
 
 def main():
-    field_degree = int(input("Введите степень поля Галуа (степень двойки): "))
-    modulus_poly_coeffs = input_modulus_poly() * field_degree
+    modulus_poly_coeffs = input_modulus_poly()
     modulus_poly = GaloisFieldCalculator(None, modulus_poly_coeffs)
 
     while True:
