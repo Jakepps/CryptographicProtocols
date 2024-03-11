@@ -1,7 +1,7 @@
 def find_cyclotomic_classes(n):
     modulus = 2 ** n - 1
-    classes = []
-    found = set()
+    classes = [] # для найденных цикломатических классов 
+    found = set() # для отслеживания уже найденных элементов
     for i in range(1, modulus + 1):  # Учитываем все элементы до 2^n - 1
         if i not in found:
             current_class = set()
@@ -10,7 +10,7 @@ def find_cyclotomic_classes(n):
                 current_class.add(value)
                 found.add(value)
                 value = (value * 2) % (modulus + 1)
-            classes.append(sorted(current_class)[1:])
+            classes.append(sorted(current_class)[1:]) #удаляем первый элемент в классе тк он будет повторятся в следующем и всегда равен 1
     print(f"Цикломатические классы для GF(2^{n}):")
     return classes
 
@@ -37,7 +37,7 @@ def multiply_by_alpha(alpha, modulus, n):
     result = alpha << 1
     # Проверяем, превышает ли результат предел для GF(2^n)
     if result >= 2 ** n:
-        result ^= modulus  # Редукция по модулю образующего многочлена (XOR)
+        result ^= modulus  # XOR по модулю образующего многочлена
     return result
 
 def reduce_alpha(alpha, modulus, m):
@@ -58,17 +58,21 @@ def reduce_alpha(alpha, modulus, m):
             break
     return alpha
 
-def generate_elements_and_minimal_polynomials(n, modulus, alpha=0b10):
-    # Начинаем с 1 (единичный многочлен)
-    elements = [1]
-    alpha = reduce_alpha(alpha, modulus, n)
-    # Начальное значение alpha по умолчанию: (x)
-    for _ in range(1, 2 ** n - 1):  # Генерируем все элементы поля GF(2^n)
-        alpha = multiply_by_alpha(alpha, modulus, n)
-        elements.append(alpha)
-
+def generate_elements_and_minimal_polynomials(m, modulus, alpha_start=0b10):
+    # переберем все alpha и найдем все уникальные элементы поля
+    # Начинаем с начального значения alpha
+    alpha = alpha_start
+    elements = [1]  # 1 всегда присутствует в поле GF(2^m)
+    
+    # Генерируем элементы поля GF(2^m)
+    for _ in range(1, 2 ** m - 1):
+        alpha = reduce_alpha(multiply_by_alpha(alpha, modulus, m), modulus, m)
+        if alpha not in elements:  # Убедимся, что элементы уникальны
+            elements.append(alpha)
+    
     # Выводим элементы поля и их полиномиальное представление
-    print("Элементы поля GF(2^{}):".format(n))
+    print("Элементы поля GF(2^{}):".format(m))
+    elements.sort()
     for element in elements:
         print(binary_to_polynomial(element))
     
@@ -93,28 +97,10 @@ print("\nЦиклотомический класс и минимальный м�
 generate_elements_and_minimal_polynomials(5,0b100101,0b1000000)
 
 #task 7-8
-def generate_elements_and_minimal_polynomials_7(m, modulus, alpha_start):
-    # переберем все alpha и найдем все уникальные элементы поля
-    # Начинаем с начального значения alpha
-    alpha = alpha_start
-    elements = [1]  # 1 всегда присутствует в поле GF(2^m)
-    
-    # Генерируем элементы поля GF(2^m)
-    for _ in range(1, 2**m - 1):
-        alpha = reduce_alpha(multiply_by_alpha(alpha, modulus, m), modulus, m)
-        if alpha not in elements:  # Убедимся, что элементы уникальны
-            elements.append(alpha)
-    
-    # Выводим элементы поля и их полиномиальное представление
-    print("Элементы поля GF(2^{}):".format(m))
-    elements.sort()
-    for element in elements:
-        print(binary_to_polynomial(element))
-
 print("\nЗадание 7")
 print("\nЦиклотомические классы и минимальные многочлены в поле Галуа x^5+x^3+1: ")
-generate_elements_and_minimal_polynomials_7(5, 0b101001, 0b10)  # для alpha = x
+generate_elements_and_minimal_polynomials(5, 0b101001, 0b10)  # для alpha = x
 
 print("\nЗадание 8")
 print("\nЦиклотомические классы и минимальные многочлены в поле Галуа x^5+x^3+x^2+x+1: ")
-generate_elements_and_minimal_polynomials_7(5, 0b101111, 0b10)  # для alpha = x
+generate_elements_and_minimal_polynomials(5, 0b101111, 0b10)  # для alpha = x
