@@ -91,4 +91,27 @@ generate_elements_and_minimal_polynomials(5,0b100101,0b10000)
 print("\nЦиклотомический класс и минимальный многочлен для x^7:")
 generate_elements_and_minimal_polynomials(5,0b100101,0b1000000)
 
-#task 7
+#task 7-8
+def generate_elements_and_minimal_polynomials_7(m, modulus, alpha_start):
+    # переберем все alpha и найдем все уникальные элементы поля
+    # Начинаем с начального значения alpha
+    alpha = alpha_start
+    elements = [1]  # 1 всегда присутствует в поле GF(2^m)
+    
+    # Генерируем элементы поля GF(2^m)
+    for _ in range(1, 2**m - 1):
+        alpha = reduce_alpha(multiply_by_alpha(alpha, modulus, m), modulus, m)
+        if alpha not in elements:  # Убедимся, что элементы уникальны
+            elements.append(alpha)
+    
+    # Выводим элементы поля и их полиномиальное представление
+    print("Элементы поля GF(2^{}):".format(m))
+    elements.sort()
+    for element in elements:
+        print(binary_to_polynomial(element))
+
+print("\nЦиклотомические классы и минимальные многочлены в поле Галуа x^5+x^3+1: ")
+generate_elements_and_minimal_polynomials_7(5, 0b101001, 0b10)  # для alpha = x
+
+print("\nЦиклотомические классы и минимальные многочлены в поле Галуа x^5+x^3+x^2+x+1: ")
+generate_elements_and_minimal_polynomials_7(5, 0b101111, 0b10)  # для alpha = x
