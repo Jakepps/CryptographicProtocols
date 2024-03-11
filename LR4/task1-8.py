@@ -73,6 +73,7 @@ def generate_elements_and_minimal_polynomials(n, modulus, alpha=0b10):
         print(binary_to_polynomial(element))
     
 #task 1-2
+print(find_cyclotomic_classes(4))
 print("Задание 1, для полинома 11001")
 generate_elements_and_minimal_polynomials(4,0b11001)
 
@@ -110,8 +111,10 @@ def generate_elements_and_minimal_polynomials_7(m, modulus, alpha_start):
     for element in elements:
         print(binary_to_polynomial(element))
 
+print("\nЗадание 7")
 print("\nЦиклотомические классы и минимальные многочлены в поле Галуа x^5+x^3+1: ")
 generate_elements_and_minimal_polynomials_7(5, 0b101001, 0b10)  # для alpha = x
 
+print("\nЗадание 8")
 print("\nЦиклотомические классы и минимальные многочлены в поле Галуа x^5+x^3+x^2+x+1: ")
 generate_elements_and_minimal_polynomials_7(5, 0b101111, 0b10)  # для alpha = x
