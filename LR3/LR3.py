@@ -65,7 +65,7 @@ def input_GaloisFieldCalculator(modulus_poly):
 
         if all(coeff in {0, 1} for coeff in coeffs):
             if len(coeffs) >= len(modulus_poly.coeffs):
-                _, remainder = modulus_poly / GaloisFieldCalculator(modulus_poly, coeffs)
+                _, remainder = dev_remainder(GaloisFieldCalculator(modulus_poly, coeffs), modulus_poly)
                 print("Многочлен не принадлежит полю, поделим на образующим и получим: ", remainder.coeffs)
                 return GaloisFieldCalculator(modulus_poly, remainder.coeffs)
             else:
@@ -73,11 +73,15 @@ def input_GaloisFieldCalculator(modulus_poly):
         else:
             print("Многочлен содержит недопустимые коэффициенты. Пожалуйста, введите многочлен с правильными коэффициентами.")
 
-def dev_remainder(modulus_poly, poly1):
-    poly1 = GaloisFieldCalculator(modulus_poly, poly1)
-    modulus_poly = GaloisFieldCalculator(modulus_poly, modulus_poly)
-    _, remainder = poly1 / modulus_poly
-    return remainder.coeffs
+def dev_remainder(self, other):
+    q = GaloisFieldCalculator(self.modulus_poly, [0])
+    r = self
+    while len(r.coeffs) >= len(other.coeffs):
+        leading_degree = len(r.coeffs) - 1
+        other_degree = len(other.coeffs) - 1
+        q += GaloisFieldCalculator(self.modulus_poly, [0]*(leading_degree - other_degree) + [1])
+        r -= (GaloisFieldCalculator(self.modulus_poly, [0]*(leading_degree - other_degree) + [1]) * other)
+    return q, r
 
 def is_irreducible(poly):
     # перебираем все возможные делители степени многочлена poly, начиная с 1 и заканчивая половиной длины многочлена
