@@ -4,8 +4,17 @@ class GaloisFieldCalculator:
         self.coeffs = coeffs
     
     def __add__(self, other):
-        #                 коэффициенты многочленов                             для определения максимальной степепени результирующего полинома
-        result_coeffs = [(self.coeffs[i] + other.coeffs[i]) % 2 for i in range(max(len(self.coeffs), len(other.coeffs)))]
+        len_self = len(self.coeffs)
+        len_other = len(other.coeffs)
+        
+        if len_self < len_other:
+            self.coeffs = [0] * (len_other - len_self) + self.coeffs
+        elif len_self > len_other:
+            other.coeffs = [0] * (len_self - len_other) + other.coeffs
+        
+        #                 коэффициенты многочленов                    для определения максимальной степепени результирующего полинома
+        result_coeffs = [(self.coeffs[i] + other.coeffs[i]) % 2 for i in range(max(len_self, len_other))]
+        
         return GaloisFieldCalculator(self.modulus_poly, result_coeffs)
 
     def __mul__(self, other):
@@ -19,9 +28,24 @@ class GaloisFieldCalculator:
         return GaloisFieldCalculator(self.modulus_poly, result_coeffs)
 
     def __sub__(self, other):
-        result_coeffs = [(self.coeffs[i] - other.coeffs[i]) % 2 for i in range(max(len(self.coeffs), len(other.coeffs)))]
+        len_self = len(self.coeffs)
+        len_other = len(other.coeffs)
+        
+        if len_self < len_other:
+            self.coeffs = [0] * (len_other - len_self) + self.coeffs
+        elif len_self > len_other:
+            other.coeffs = [0] * (len_self - len_other) + other.coeffs
+        
+        result_coeffs = [(self.coeffs[i] - other.coeffs[i]) % 2 for i in range(max(len_self, len_other))]
+        
         return GaloisFieldCalculator(self.modulus_poly, result_coeffs)
 
+    @staticmethod
+    def strip_zeros(coeffs):
+        while len(coeffs) > 1 and coeffs[0] == 0:
+            coeffs.pop(0)
+        return coeffs
+    
     def __truediv__(self, other):
         q = GaloisFieldCalculator(self.modulus_poly, [0]) #частное
         r = self #остаток
@@ -32,6 +56,8 @@ class GaloisFieldCalculator:
             #выравниваем степени текущего остатка с делителем перед выполнением деления
             q += GaloisFieldCalculator(self.modulus_poly, [0]*(leading_degree - other_degree) + [1])
             r -= (GaloisFieldCalculator(self.modulus_poly, [0]*(leading_degree - other_degree) + [1]) * other)
+            q.coeffs = self.strip_zeros(q.coeffs)
+            r.coeffs = self.strip_zeros(r.coeffs)
         return q, r
 
     def gcd(self, other):
@@ -65,23 +91,14 @@ def input_GaloisFieldCalculator(modulus_poly):
 
         if all(coeff in {0, 1} for coeff in coeffs):
             if len(coeffs) >= len(modulus_poly.coeffs):
-                _, remainder = dev_remainder(GaloisFieldCalculator(modulus_poly, coeffs), modulus_poly)
-                print("Многочлен не принадлежит полю, поделим на образующим и получим: ", remainder.coeffs)
+                _, remainder = GaloisFieldCalculator(modulus_poly, coeffs) / modulus_poly
+                print("Многочлен не принадлежит полю, поделим на образующим и получим: ", remainder.coeffs, 
+                      " или ",bin_to_polynomial(remainder.coeffs))
                 return GaloisFieldCalculator(modulus_poly, remainder.coeffs)
             else:
                 return GaloisFieldCalculator(modulus_poly, coeffs)
         else:
             print("Многочлен содержит недопустимые коэффициенты. Пожалуйста, введите многочлен с правильными коэффициентами.")
-
-def dev_remainder(self, other):
-    q = GaloisFieldCalculator(self.modulus_poly, [0])
-    r = self
-    while len(r.coeffs) >= len(other.coeffs):
-        leading_degree = len(r.coeffs) - 1
-        other_degree = len(other.coeffs) - 1
-        q += GaloisFieldCalculator(self.modulus_poly, [0]*(leading_degree - other_degree) + [1])
-        r -= (GaloisFieldCalculator(self.modulus_poly, [0]*(leading_degree - other_degree) + [1]) * other)
-    return q, r
 
 def is_irreducible(poly):
     # перебираем все возможные делители степени многочлена poly, начиная с 1 и заканчивая половиной длины многочлена
