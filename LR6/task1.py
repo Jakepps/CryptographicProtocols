@@ -107,8 +107,7 @@ print("Секретный ключ (nb):", nb)
 print("Открытый ключ (Pb):", Pb)
 print("Шифротекст:", ciphertext)
 print("Полученный точки:", decrypted_points)
-print("Полученный текст:", decrypted_message)
-print("\n")
+print("Полученный текст:", decrypted_message, "\n")
 
 # task2 
 # Обновленная генерирующая точка
