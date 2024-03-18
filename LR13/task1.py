@@ -7,7 +7,7 @@ def encrypt_aes_ofb(key, iv, plaintext):
     backend = default_backend()
     cipher = Cipher(algorithms.AES(key), modes.OFB(iv), backend=backend)
     encryptor = cipher.encryptor()
-    padder = padding.PKCS7(128).padder()
+    padder = padding.PKCS7(128).padder() # используется для дополения текста до необходимой длинны, PKCS7(128)- для согласованности длины блоков
     padded_plaintext = padder.update(plaintext) + padder.finalize()
     ciphertext = encryptor.update(padded_plaintext) + encryptor.finalize()
     return ciphertext
