@@ -1,5 +1,3 @@
-import hashlib
-
 def sha1(message):
     # Инициализация переменных
     h0 = 0x67452301
